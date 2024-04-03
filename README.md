@@ -2,6 +2,7 @@
 Here you will find a collection of detailed write-ups for various penetration testing challenges, capture the flag (CTF) exercises, and vulnerable machines that I have tackled
 
 # CTF PLATAFORMS
+(click on the photos to be taken to my profile on that platform)
 <p align=center>
     <a href="https://app.hackthebox.com/users/1693016">
         <img src="https://www.hackthebox.com/images/logo-htb.svg" alt="Hack The Box: Cybersecurity Training" title="Hack the Box" style="height:200px; width:200px;">
