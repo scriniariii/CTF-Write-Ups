@@ -223,7 +223,7 @@ Now that we have access to the id_rsa file we have to copy it to our working dir
 <pre><code>cp /mnt/kenobiNSF/tmp/id_rsa /home/Arch/kenobi/</code></pre>
 <br><br>
 
-We have to change the permissions of this file to 600 using chmod, it is necesary for a ssh logint to use the identify file.
+We have to change the permissions of this file to 600 using chmod, it is necesary for a ssh login to use the identify file.
 <pre><code>~/kenobi> chmod 600 id_rsa</code></pre>
 
 <pre><code>~/kenobi> ssh -i id_rsa kenobi@10.10.180.178</code></pre>
