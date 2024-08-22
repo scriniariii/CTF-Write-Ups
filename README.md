@@ -7,13 +7,13 @@ Here you will find a collection of detailed write-ups for various penetration te
     <a href="https://app.hackthebox.com/users/1693016">
         <img src="https://www.hackthebox.com/images/logo-htb.svg" alt="Hack The Box: Cybersecurity Training" title="Hack the Box" style="height:200px; width:200px;">
     </a>
-    <a href="https://tryhackme.com/p/maxipk">
+    <a href="https://tryhackme.com/p/h4wtsauce">
         <img src="https://assets.tryhackme.com/img/logo/tryhackme_logo_full.svg" alt="TryHackMe" title="Try Hack Me" style="height:200px; width:200px;">
     </a>
     <a href="https://www.vulnhub.com/">     
         <img src="https://www.vulnhub.com/static/img/logo.svg" alt="VulnHub-Logo" title="VulnHub" style="height:200px; width:200px;">
     </a>
-    <a href="https://play.picoctf.org/users/maxipk">
+    <a href="https://play.picoctf.org/users/h4wtsauce">
         <img src="https://play.picoctf.org/static/media/picoctf-logo-horizontal-white.17fdf0dcdef08dc3396a195b95e3bc29.svg" alt="pico-logo" title="PicoCTF" style="height:200px; width:200px;">
     </a>
     <a href="https://hackmyvm.eu/profile/?user=maxi">
