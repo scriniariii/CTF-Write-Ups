@@ -1,3 +1,5 @@
+Hi, here is how to successfully complete the machine https://tryhackme.com/r/room/kenobi
+
 Let's start by performing a scan with Nmap to identify the services running on the target system. This scan reveals several open ports:
 
 Port 21 (FTP): This indicates that ProFTPD, a File Transfer Protocol (FTP) server, is running. FTP allows users to upload and download files between computers.<br><br>
