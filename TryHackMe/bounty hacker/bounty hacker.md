@@ -149,4 +149,4 @@ tar: Removing leading `/' from member names
 root</code></pre>
 
 <pre><code># cat root.txt
-THM{80UN7Y_h4cK3r}</code></pre>
+THM{????}</code></pre>
