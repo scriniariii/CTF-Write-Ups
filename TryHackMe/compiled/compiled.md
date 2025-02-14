@@ -132,5 +132,5 @@ undefined8 main(void)
 <br><br><br>
 
 
-knowing this, the only thing left to do is to try
+Knowing this, the only thing left to do is to try
 ![2025-02-13_08-52](https://github.com/user-attachments/assets/14e4510e-8c1e-4e8a-b430-bd62faa4db2f)
