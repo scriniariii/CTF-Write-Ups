@@ -1,4 +1,4 @@
-hi, here is how i successfully solved the ctf https://tryhackme.com/room/compiled
+Hi, here is how i successfully solved the ctf https://tryhackme.com/room/compiled
 ![compiled](https://github.com/user-attachments/assets/97a82e83-21db-4c6a-8566-c36e73f9b14d)
 <br><br><br>
 
