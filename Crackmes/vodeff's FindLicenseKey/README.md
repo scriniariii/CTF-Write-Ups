@@ -5,9 +5,7 @@
 
 ## 1. recon
 
-The program is executed like this:
-
-It asks for a license key and validates whether it matches what the program expects internally. 
+The program asks for a license key and validates whether it matches what the program expects internally. 
 
 ```bash
 ./findlicensekey <username>
@@ -63,19 +61,19 @@ undefined8 FUN_0010121a(int param_1,undefined8 *param_2)
 }
 ```
 
-Translated into code
+Translated into words
 
-```
-username = argv[1]
-expected_key = generate_key(username)      // FUN_00101189
-entered_key  = read_from_stdin()
-if entered_key == expected_key:
-    print("Key validated")
-else:
-    print("Invalid key")
-```
+It starts by setting up a stack canary (local_10 = (long )(in_FS_OFFSET + 0x28)), which is just standard buffer overflow protection, nothing relevant.
 
-The key detail here is that `FUN_00101189` is called **before** the input is requested, meaning the expected key is computed purely from the username passed on the command line. There's no embedded secret that depends on the user's input; the entire challenge lies in understanding that generation function.
+Then it checks that exactly one argument was passed (param_1 == 2, meaning argv[0] + argv[1]). If not, it prints usage and exits with code 2.
+
+If the argument is present, it calls FUN_00101189(argv[1], local_118), which transforms the argument somehow and stores the result in local_118. 
+
+Next it prompts the user to enter a license key and reads up to 255 characters into local_218 via scanf. 
+
+Finally it does a plain strcmp(local_218, local_118) 
+
+The key detail here is that `FUN_00101189` is called before the input is requested, meaning the expected key is computed purely from the username passed on the command line. There's no embedded secret that depends on the user's input, the entire challenge lies in understanding that generation function.
 
 ## 3. Analyzing the Key Generation Function
 
@@ -98,9 +96,10 @@ void FUN_00101189(long param_1,long param_2)
 
 ### Identifying parameters and structure
 
-param_1 → pointer to the username (input)
-param_2 → pointer to the output buffer (where the expected key is written)
-local_20 → loop counter (i)
+- param_1 → pointer to the username (input)
+- param_2 → pointer to the output buffer (where the expected key is written)
+- local_20 → loop counter (i)
+
 The long embedded string is a substitution table of exactly 62 characters
 0x18 = 24 (decimal), 0x3e = 62 (decimal),  0xff = 255 (decimal)
 
@@ -110,7 +109,7 @@ The long embedded string is a substitution table of exactly 62 characters
 for (local_20 = 0; (local_20 < 0x18 && (local_20 < 0xff)); local_20 = local_20 + 1)
 ```
 
-There are two conditions, but local_20 < 0x18 (24) is always more restrictive than local_20 < 0xff (255), so in practice the loop always iterates exactly 24 times, regardless of the username's actual length. The second condition never ends up being the one that cuts the loop short, it's likely a leftover from a larger data type in the original source code, irrelevant to the observed behavior.
+There are two conditions, local_20 < 0x18 (24) is always more restrictive than local_20 < 0xff (255), so in practice the loop always iterates exactly 24 times, regardless of the username's actual length. The second condition never ends up being the one that cuts the loop short, it's likely a leftover from a larger data type in the original source code, irrelevant to the observed behavior.
 
 ### The core operation
 
@@ -118,30 +117,30 @@ There are two conditions, but local_20 < 0x18 (24) is always more restrictive th
 TABLE[(i + username[i]) % 0x3e]
 ```
 
-For each position i from 0 to 23:
+For each position [i] goes from 0 to 23:
 
-Read the username byte at that position: username i
-Add the position index: username i + i
-Reduce modulo 62 (the exact size of the table): % 0x3e
-Use the result as an index to pull a character from the substitution table
+- Reads the username byte at that position: username[i]
+- Adds the position index: username[i] + i
+- Reduces module 62 (the exact size of the table): % 0x3e
+- Uses the result as an index to pull a character from the substitution table
 
-At the end, the null terminator is appended:
+the null terminator is appended:
 
 ```c
 *(undefined1 *)(param_2 + local_20) = 0;
 ```
 
-### Why the modulus is 62
+### Why module 62?
 
-The table:
+This table:
 
 ```
 QAZPLWSXOKMEYDCIJNRFVUHBTGqpalzmwoeirutyskdjfhgxncbv1750284369
 ```
 
-has exactly 62 characters (26 uppercase + 26 lowercase + 10 digits = 62). The % 0x3e (62) guarantees that the calculated index always falls within the table's valid range, regardless of how large i + username i gets.
+has exactly 62 characters (26 uppercase + 26 lowercase + 10 digits = 62). The % 0x3e (62) guarantees that the calculated index always falls within the table's valid range, regardless of how large [i] + username [i] gets.
 
-## 4. Why the Username Needs to Be 24 Characters
+## 4. Why Does the Username Need 24 Characters
 
 This is a subtle point that isn't obvious at first glance, but it follows directly from analyzing the loop.
 
