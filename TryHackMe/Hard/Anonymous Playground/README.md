@@ -55,7 +55,7 @@ Disallow: /zYdHuAKjP
 
 Navigating to http://{ip}/zYdHuAKjP returns an "Access Denied" message.
 
-![[Pasted image 20260622175604.png]]
+<img width="1363" height="139" alt="imagen" src="https://github.com/user-attachments/assets/d4e9b14b-888f-4836-9483-d4c78222bc62" />
 
 Opening the browser's Developer Tools (F12 --> Storage --> Cookies) reveals a cookie named something like access with the value denied. If i change the cookie value from denied to granted and refresh the page. This grants access to the page, which displays what appears to be a custom cipher
 ![[Pasted image 20260622182320.png]]
