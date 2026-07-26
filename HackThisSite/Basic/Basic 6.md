@@ -1,5 +1,5 @@
 
-> [!NOTE] Challenge description
+> [!NOTE] 
 > Network Security Sam has encrypted his password. The encryption system is publically available and can be accessed with this form:You have recovered his encrypted password. It is:  
   
 

@@ -1,4 +1,4 @@
-> [!NOTE] Challenge description
+> [!NOTE] 
 > This time Sam hardcoded the password into the script. However, the password is long and complex, and Sam is often forgetful. So he wrote a script that would email his password to him automatically in case he forgot. Here is the script:
 
 The description points us straight at a "forgot password" style feature

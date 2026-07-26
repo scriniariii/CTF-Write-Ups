@@ -1,5 +1,5 @@
 
-> [!NOTE] Challenge description
+> [!NOTE] 
 > This time Network Security Sam remembered to upload the password file, but there were deeper problems than that.
 
 

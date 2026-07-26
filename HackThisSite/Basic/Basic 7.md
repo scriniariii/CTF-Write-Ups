@@ -1,5 +1,5 @@
 	
-> [!NOTE] Challenge description
+> [!NOTE] 
 > This time Network Security sam has saved the unencrypted level7 password in an obscurely named file saved in this very directory.  In other unrelated news, Sam has set up a script that returns the output from the UNIX cal command. Here is the script:
   
   

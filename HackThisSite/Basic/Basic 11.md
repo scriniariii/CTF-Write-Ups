@@ -1,5 +1,5 @@
 
-> [!NOTE] Challenge description
+> [!NOTE] 
 > Sam decided to make a music site. Unfortunately he does not understand Apache. This mission is a bit harder than the other basics.
 
 Every page reload serves up a different Elton John lyric
